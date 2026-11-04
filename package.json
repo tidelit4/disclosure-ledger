@@ -1,0 +1,27 @@
+{
+  "name": "disclosure-ledger",
+  "version": "0.1.0",
+  "description": "Private proof-of-prior-discovery for security researchers, on Midnight",
+  "license": "Apache-2.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "contract",
+    "cli"
+  ],
+  "scripts": {
+    "compact": "npm run compact --workspace contract",
+    "test": "npm run test --workspace contract",
+    "build": "npm run build --workspace contract",
+    "demo": "npm run demo --workspace cli"
+  },
+  "dependencies": {
+    "@midnight-ntwrk/compact-runtime": "0.16.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.0"
+  }
+}

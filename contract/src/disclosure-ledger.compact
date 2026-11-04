@@ -1,0 +1,161 @@
+// Disclosure Ledger: private proof-of-prior-discovery for security researchers.
+// SPDX-License-Identifier: Apache-2.0
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// A researcher commits to a vulnerability report without revealing it.
+//
+//   PUBLIC  (ledger):  commitment = persistentCommit(sha256(report), salt),
+//                      a per-entry pseudonymous owner key, a global ordinal,
+//                      an on-chain-enforced "included before" timestamp, a
+//                      status, and (only after the owner chooses) the report
+//                      digest that the vendor already holds.
+//   PRIVATE (witness): the researcher's secret key, the report digest and the
+//                      salt. They never leave the researcher's machine unless
+//                      the researcher hands an opening to a vendor.
+
+pragma language_version >= 0.20;
+
+import CompactStandardLibrary;
+
+// Lifecycle of a committed report.
+//   committed -> disclosed -> resolved
+//   committed -> withdrawn
+export enum Status { committed, disclosed, resolved, withdrawn }
+
+// The private opening of a commitment. Lives only in the researcher's
+// private state (see witnesses.ts).
+export struct ReportOpening {
+  digest: Bytes<32>,
+  salt: Bytes<32>
+}
+
+// One public ledger entry, keyed by the commitment.
+export struct Entry {
+  // persistentHash(domain, commitment, secretKey): proves ownership in zero
+  // knowledge and is different for every entry, so two entries by the same
+  // researcher cannot be linked by an observer.
+  owner: Bytes<32>,
+  // 1-based position of this commitment in the ledger: a total order that
+  // settles "who was first" even inside the same block window.
+  ordinal: Uint<64>,
+  // UNIX time (seconds). The commit transaction asserted blockTimeLt(notAfter),
+  // so the network guarantees the commitment existed before this instant.
+  notAfter: Uint<64>,
+  status: Status,
+  // All zeroes until the owner proves, in zero knowledge, that the committed
+  // report is the one whose sha256 the vendor published.
+  digest: Bytes<32>
+}
+
+export ledger entries: Map<Bytes<32>, Entry>;
+export ledger entryCount: Counter;
+
+// ---- Witnesses: private state supplied by the researcher's local DApp -------
+
+// The researcher's long-term secret key.
+witness localSecretKey(): Bytes<32>;
+// The report currently being committed (digest + fresh random salt).
+witness draftReport(): ReportOpening;
+// The opening for a commitment made earlier.
+witness reportOpening(commitment: Bytes<32>): ReportOpening;
+
+// ---- Pure helpers (also callable from TypeScript, e.g. by a vendor) ---------
+
+export pure circuit reportCommitment(digest: Bytes<32>, salt: Bytes<32>): Bytes<32> {
+  return persistentCommit<Bytes<32>>(digest, salt);
+}
+
+export pure circuit ownerKey(sk: Bytes<32>, commitment: Bytes<32>): Bytes<32> {
+  return persistentHash<Vector<3, Bytes<32>>>(
+    [pad(32, "disclosure-ledger:owner:v1"), commitment, sk]);
+}
+
+// ---- Internal ---------------------------------------------------------------
+
+// Look up an entry and prove, without revealing the secret key, that the
+// caller is the researcher who created it.
+circuit ownedEntry(commitment: Bytes<32>): Entry {
+  assert(entries.member(commitment), "Unknown commitment");
+  const entry = entries.lookup(commitment);
+  assert(entry.owner == ownerKey(localSecretKey(), commitment),
+         "Only the researcher who committed this report can change it");
+  return entry;
+}
+
+circuit withStatus(entry: Entry, status: Status, digest: Bytes<32>): Entry {
+  return Entry {
+    owner: entry.owner,
+    ordinal: entry.ordinal,
+    notAfter: entry.notAfter,
+    status: status,
+    digest: digest
+  };
+}
+
+// ---- Public circuits (transactions) -----------------------------------------
+
+// Commit to the report held in private state. Only the commitment, the owner
+// key and the deadline become public. The transaction can only be included in
+// a block whose time is before `notAfter`.
+export circuit commitReport(notAfter: Uint<64>): Bytes<32> {
+  const deadline = disclose(notAfter);
+  assert(blockTimeLt(deadline), "Deadline has already passed");
+
+  const draft = draftReport();
+  // A commitment with a random salt hides the report digest.
+  const commitment = disclose(reportCommitment(draft.digest, draft.salt));
+  assert(!entries.member(commitment), "This report is already committed");
+
+  entryCount.increment(1);
+  entries.insert(commitment, Entry {
+    owner: disclose(ownerKey(localSecretKey(), commitment)),
+    ordinal: entryCount.read(),
+    notAfter: deadline,
+    status: Status.committed,
+    digest: default<Bytes<32>>
+  });
+  return commitment;
+}
+
+// Selective disclosure: the vendor publishes (or sends) sha256(report). The
+// owner proves in zero knowledge that their earlier commitment opens to that
+// digest. The salt stays private; the report text never touches the chain.
+export circuit proveMatch(commitment: Bytes<32>, vendorDigest: Bytes<32>): [] {
+  const c = disclose(commitment);
+  const entry = ownedEntry(c);
+  assert(entry.status == Status.committed, "Report is not in the committed state");
+
+  const opening = reportOpening(c);
+  assert(reportCommitment(opening.digest, opening.salt) == c,
+         "Private opening does not match the commitment");
+  assert(opening.digest == vendorDigest,
+         "Committed report does not match the vendor-supplied digest");
+
+  entries.insert(c, withStatus(entry, Status.disclosed, disclose(vendorDigest)));
+}
+
+// The vendor fixed the bug (or paid the bounty); the owner closes the entry.
+export circuit markResolved(commitment: Bytes<32>): [] {
+  const c = disclose(commitment);
+  const entry = ownedEntry(c);
+  assert(entry.status == Status.disclosed, "Only a disclosed report can be resolved");
+  entries.insert(c, withStatus(entry, Status.resolved, entry.digest));
+}
+
+// The researcher retracts a commitment (false positive, duplicate of their own).
+export circuit withdraw(commitment: Bytes<32>): [] {
+  const c = disclose(commitment);
+  const entry = ownedEntry(c);
+  assert(entry.status == Status.committed, "Only a committed report can be withdrawn");
+  entries.insert(c, withStatus(entry, Status.withdrawn, entry.digest));
+}

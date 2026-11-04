@@ -1,0 +1,25 @@
+{
+  "name": "@disclosure-ledger/contract",
+  "version": "0.1.0",
+  "description": "Compact contract, witnesses and simulator for the Disclosure Ledger",
+  "license": "Apache-2.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "compact": "compact compile src/disclosure-ledger.compact src/managed/disclosure-ledger",
+    "compact:fast": "compact compile --skip-zk src/disclosure-ledger.compact src/managed/disclosure-ledger",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "build": "node scripts/build.mjs",
+    "test": "vitest run",
+    "ci": "npm run compact && npm run typecheck && npm run build && npm run test"
+  }
+}

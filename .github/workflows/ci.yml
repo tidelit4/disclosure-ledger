@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions: {}
+
+env:
+  # Versions currently deployed on Midnight Preview, Preprod and Mainnet (ledger 8):
+  # https://docs.midnight.network/relnotes/support-matrix
+  COMPACT_DEVTOOLS_VERSION: "0.5.3"
+  COMPACT_TOOLCHAIN_VERSION: "0.31.1"
+
+jobs:
+  compile-and-test:
+    name: Compile contract, typecheck, test, demo
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Compact devtools
+        run: |
+          curl --proto '=https' --tlsv1.2 -LsSf \
+            "https://github.com/midnightntwrk/compact/releases/download/compact-v${COMPACT_DEVTOOLS_VERSION}/compact-installer.sh" | sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Install Compact toolchain ${{ env.COMPACT_TOOLCHAIN_VERSION }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          compact --version
+          compact update "${COMPACT_TOOLCHAIN_VERSION}"
+          compact compile --version
+          compact compile --language-version || true
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        run: |
+          npm --version
+          npm ci --legacy-peer-deps
+
+      - name: Compile the Compact contract
+        run: npm run compact --workspace contract
+
+      - name: Typecheck contract package
+        run: npm run typecheck --workspace contract
+
+      - name: Build contract package
+        run: npm run build --workspace contract
+
+      - name: Run simulator tests
+        run: npm run test --workspace contract
+
+      - name: Typecheck CLI
+        run: npm run typecheck --workspace cli
+
+      - name: Run CLI demo
+        run: npm run demo --workspace cli
+
+      - name: Upload compiler output and test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: compiled-contract
+          path: |
+            contract/src/managed/disclosure-ledger/contract
+            contract/src/managed/disclosure-ledger/compiler
+            contract/reports
+          if-no-files-found: warn

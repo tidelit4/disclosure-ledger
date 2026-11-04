@@ -1,0 +1,19 @@
+{
+  "name": "@disclosure-ledger/cli",
+  "version": "0.1.0",
+  "description": "Command-line driver for the Disclosure Ledger contract (simulator)",
+  "license": "Apache-2.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "disclosure-ledger": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "demo": "tsx src/index.ts demo",
+    "start": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@disclosure-ledger/contract": "0.1.0"
+  }
+}
