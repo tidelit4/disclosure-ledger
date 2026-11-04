@@ -23,7 +23,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install Compact devtools
         run: |
@@ -37,11 +37,11 @@ jobs:
         run: |
           compact --version
           compact update "${COMPACT_TOOLCHAIN_VERSION}"
-          compact compile --version
-          compact compile --language-version || true
+          echo "compiler: $(compact compile --version)"
+          echo "language: $(compact compile --language-version)"
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: "24"
 
@@ -50,8 +50,15 @@ jobs:
           npm --version
           npm ci --legacy-peer-deps
 
-      - name: Compile the Compact contract
+      - name: Compile the Compact contract (with ZK keys)
         run: npm run compact --workspace contract
+
+      - name: Show compiler output
+        run: |
+          cd contract/src/managed/disclosure-ledger
+          find . -type f | sort
+          echo "--- circuits in contract-info.json"
+          node -e 'const i=require("./compiler/contract-info.json"); for (const c of i.circuits ?? []) console.log(c.name, c.pure ? "(pure)" : "(proof)", (c.arguments ?? []).map(a => a.name).join(", "))'
 
       - name: Typecheck contract package
         run: npm run typecheck --workspace contract
@@ -70,11 +77,33 @@ jobs:
 
       - name: Upload compiler output and test report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: compiled-contract
           path: |
-            contract/src/managed/disclosure-ledger/contract
-            contract/src/managed/disclosure-ledger/compiler
+            contract/src/managed/disclosure-ledger
             contract/reports
           if-no-files-found: warn
+
+  # Informational: does the same source also compile with the newest toolchain
+  # (0.36.x, language 0.28, ledger 9, not yet deployed on public networks)?
+  forward-compat:
+    name: Compile with latest Compact toolchain (informational)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install Compact devtools and latest toolchain
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          curl --proto '=https' --tlsv1.2 -LsSf \
+            "https://github.com/midnightntwrk/compact/releases/download/compact-v${COMPACT_DEVTOOLS_VERSION}/compact-installer.sh" | sh
+          export PATH="$HOME/.local/bin:$PATH"
+          compact update 0.36
+          echo "compiler: $(compact compile --version)"
+          echo "language: $(compact compile --language-version)"
+          compact compile --skip-zk contract/src/disclosure-ledger.compact /tmp/managed-latest
+          ls -R /tmp/managed-latest | head -40
