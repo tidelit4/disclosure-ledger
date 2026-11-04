@@ -50,7 +50,9 @@ Pinned to what Midnight Preview, Preprod and Mainnet run today (ledger 8), per t
 | Node.js | 24 (CI), 20+ works for the tests |
 
 Toolchains 0.34 to 0.36 target ledger 9, which is not deployed yet, so the contract is built with 0.31.1
-to stay deployable. The source declares `pragma language_version >= 0.20`.
+to stay deployable. The source declares `pragma language_version >= 0.20`, and CI also compiles it
+with toolchain 0.36.0 (language 0.28) as a forward-compatibility check, so the move to ledger 9 is a
+version bump.
 
 ## Setup
 
