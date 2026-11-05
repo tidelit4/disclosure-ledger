@@ -1,0 +1,248 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<!-- Pitch deck source. docs/deck.pdf is this file printed with headless Chrome:
+     chrome --headless=new --no-pdf-header-footer --print-to-pdf=docs/deck.pdf docs/deck.html
+     Append ?only=N to show a single slide (used for video frames). -->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Disclosure Ledger: pitch deck</title>
+<style>
+  @page { size: 1920px 1080px; margin: 0; }
+  :root {
+    --bg: #0d1117; --panel: #161b22; --line: #30363d; --text: #e6edf3; --muted: #8b949e;
+    --accent: #7c8cff; --alice: #58a6ff; --bob: #f0883e; --ok: #3fb950; --bad: #f85149; --warn: #f2cc60;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); }
+  body { font-family: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif; color: var(--text);
+         -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  code, .mono { font-family: Consolas, "Cascadia Mono", ui-monospace, monospace; }
+  .slide { width: 1920px; height: 1080px; padding: 90px 120px 80px; position: relative; overflow: hidden;
+           page-break-after: always; break-after: page; background: var(--bg); }
+  .slide:last-child { page-break-after: auto; break-after: auto; }
+  .kicker { color: var(--accent); text-transform: uppercase; letter-spacing: 3px; font-size: 24px; font-weight: 600; }
+  h1 { font-size: 112px; margin: 0; letter-spacing: -1px; }
+  h2 { font-size: 64px; margin: 14px 0 40px; letter-spacing: -0.5px; }
+  p, li { font-size: 32px; line-height: 1.45; }
+  ul { margin: 0; padding-left: 36px; }
+  li { margin: 0 0 18px; }
+  .muted { color: var(--muted); }
+  .foot { position: absolute; left: 120px; right: 120px; bottom: 40px; display: flex; justify-content: space-between;
+          color: var(--muted); font-size: 20px; border-top: 1px solid var(--line); padding-top: 14px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 34px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 34px 36px; }
+  .card h3 { font-size: 36px; margin: 6px 0 16px; }
+  .card p, .card li { font-size: 26px; line-height: 1.45; margin: 0 0 12px; }
+  .num { display: inline-block; width: 56px; height: 56px; border-radius: 28px; background: var(--accent); color: #0d1117;
+         font-weight: 800; font-size: 32px; text-align: center; line-height: 56px; }
+  table { border-collapse: collapse; width: 100%; font-size: 25px; }
+  th { text-align: left; color: var(--muted); font-weight: 600; padding: 12px 16px; border-bottom: 2px solid var(--line); }
+  td { padding: 15px 16px; border-bottom: 1px solid #21262d; vertical-align: top; line-height: 1.35; }
+  td code { color: #d2a8ff; }
+  .pub { color: var(--alice); } .priv { color: var(--ok); }
+  .tag { display: inline-block; border: 1px solid var(--line); border-radius: 20px; padding: 4px 16px; font-size: 22px; margin-right: 10px; color: var(--muted); }
+  .check { color: var(--ok); font-weight: 800; margin-right: 14px; }
+  .gap { color: var(--warn); font-weight: 800; margin-right: 14px; }
+  .flow { display: flex; align-items: center; gap: 18px; font-size: 26px; margin-top: 40px; }
+  .pill { border: 2px solid var(--line); border-radius: 30px; padding: 8px 24px; }
+  .pill.c { border-color: #1f6feb; color: var(--alice); } .pill.d { border-color: #8957e5; color: #d2a8ff; }
+  .pill.r { border-color: #238636; color: var(--ok); } .pill.w { color: var(--muted); }
+  .arrow { color: var(--muted); }
+  .big-quote { font-size: 150px; font-weight: 800; color: var(--bad); margin: 10px 0 30px; letter-spacing: -2px; }
+  .shot { width: 100%; border: 1px solid var(--line); border-radius: 12px; display: block; }
+</style>
+</head>
+<body>
+
+<!-- 1. Title -->
+<section class="slide">
+  <div style="margin-top: 170px">
+    <div class="kicker">Midnight Buildathon · wave 3</div>
+    <h1 style="margin-top: 24px">Disclosure Ledger</h1>
+    <p style="font-size: 44px; margin: 20px 0 60px; color: #c9d1d9">Private proof of prior discovery for security researchers</p>
+    <span class="tag">Compact contract</span><span class="tag">4 zero-knowledge circuits</span>
+    <span class="tag">Midnight dual public / private ledger</span><span class="tag">Apache-2.0</span>
+  </div>
+  <div class="foot"><span>tidelit4 (AI-assisted build, disclosed)</span><span>github.com/tidelit4/disclosure-ledger</span></div>
+</section>
+
+<!-- 2. Problem -->
+<section class="slide">
+  <div class="kicker">The problem</div>
+  <div class="big-quote">"Duplicate."</div>
+  <div class="grid2">
+    <div>
+      <p>Bug-bounty programs pay the first reporter. When two researchers find the same bug, the later
+      report is closed as a duplicate, and the researcher has no way to show they found it first.</p>
+      <p class="muted">Proving it today means publishing something: a dated post, a Git commit, a hash on a
+      public chain. That leaks the bug, is self-asserted, or ties every finding to one identity.</p>
+    </div>
+    <div class="card">
+      <h3>What a researcher needs</h3>
+      <ul>
+        <li>a time bound <b>enforced by the network</b>, not claimed</li>
+        <li>an entry that <b>reveals nothing</b> about the bug</li>
+        <li>entries that <b>cannot be linked</b> to each other or to them</li>
+        <li>a check that <b>one vendor</b> can run without telling anyone</li>
+      </ul>
+    </div>
+  </div>
+  <div class="foot"><span>Disclosure Ledger</span><span>2</span></div>
+</section>
+
+<!-- 3. How it works -->
+<section class="slide">
+  <div class="kicker">How it works</div>
+  <h2>Commit privately. Prove to one vendor. Disclose only when you choose.</h2>
+  <div class="grid3">
+    <div class="card">
+      <span class="num">1</span>
+      <h3>Commit privately</h3>
+      <p><code>commitReport(notAfter)</code> publishes a commitment to <code>sha256(report)</code> with a random salt,
+      a per-entry owner key, a global ordinal and a deadline the network enforces.</p>
+      <p class="muted">Report, digest, salt and secret key stay in private state.</p>
+    </div>
+    <div class="card">
+      <span class="num">2</span>
+      <h3>Prove to one vendor, off-chain</h3>
+      <p>The researcher sends the vendor the report and salt. The vendor hashes it with any tool,
+      recomputes the commitment and reads the entry: <i>"on chain before T, entry #N"</i>.</p>
+      <p class="muted">No transaction. Nobody else learns the check happened.</p>
+    </div>
+    <div class="card">
+      <span class="num">3</span>
+      <h3>Disclose selectively, on chain</h3>
+      <p><code>proveMatch(commitment, vendorDigest)</code> proves in zero knowledge that the entry opens to the digest
+      the vendor published. Then the owner can <code>markResolved</code>.</p>
+      <p class="muted">The salt and the report never touch the chain.</p>
+    </div>
+  </div>
+  <div class="flow">
+    <span class="muted">Entry lifecycle:</span>
+    <span class="pill c">committed</span><span class="arrow">→</span><span class="pill d">disclosed</span><span class="arrow">→</span><span class="pill r">resolved</span>
+    <span class="muted" style="margin-left: 40px">or</span>
+    <span class="pill c">committed</span><span class="arrow">→</span><span class="pill w">withdrawn</span>
+  </div>
+  <div class="foot"><span>Disclosure Ledger</span><span>3</span></div>
+</section>
+
+<!-- 4. Circuits -->
+<section class="slide">
+  <div class="kicker">The Compact contract</div>
+  <h2>Four zero-knowledge circuits</h2>
+  <table>
+    <thead><tr><th style="width: 23%">Circuit</th><th style="width: 9%">Who</th><th style="width: 28%">Becomes public</th><th>Proved in zero knowledge</th></tr></thead>
+    <tbody>
+      <tr><td><code>commitReport(notAfter)</code></td><td>anyone</td><td>commitment, owner key, ordinal, <code>notAfter</code></td>
+          <td>block time &lt; <code>notAfter</code>; commitment = <code>persistentCommit(digest, salt)</code> of the private draft; not already on the ledger</td></tr>
+      <tr><td><code>proveMatch(c, vendorDigest)</code></td><td>owner</td><td>status <i>disclosed</i>, <code>vendorDigest</code></td>
+          <td>caller's secret key derives the entry's owner key; private opening matches the commitment; its digest equals <code>vendorDigest</code></td></tr>
+      <tr><td><code>markResolved(c)</code></td><td>owner</td><td>status <i>resolved</i></td><td>ownership; entry is <i>disclosed</i></td></tr>
+      <tr><td><code>withdraw(c)</code></td><td>owner</td><td>status <i>withdrawn</i></td><td>ownership; entry is <i>committed</i></td></tr>
+    </tbody>
+  </table>
+  <p class="muted" style="font-size: 26px; margin-top: 30px">Pure helpers <code>reportCommitment</code> and <code>ownerKey</code> are exported to TypeScript, so a vendor hashes exactly as the circuit does.
+  Witnesses: <code>localSecretKey()</code>, <code>draftReport()</code>, <code>reportOpening(c)</code>.</p>
+  <div class="foot"><span>Disclosure Ledger</span><span>4</span></div>
+</section>
+
+<!-- 5. Privacy -->
+<section class="slide">
+  <div class="kicker">Privacy properties</div>
+  <h2>What is public, what stays private, and why</h2>
+  <div class="grid2" style="grid-template-columns: 1.05fr 1fr">
+    <table>
+      <thead><tr><th>Data</th><th>Where</th></tr></thead>
+      <tbody>
+        <tr><td>report text</td><td class="priv">researcher's disk only</td></tr>
+        <tr><td>salt (32 random bytes)</td><td class="priv">private state, or one vendor</td></tr>
+        <tr><td>secret key</td><td class="priv">private state</td></tr>
+        <tr><td>digest = sha256(report)</td><td class="priv">private until <code>proveMatch</code></td></tr>
+        <tr><td>commitment</td><td class="pub">public: the anchor</td></tr>
+        <tr><td>owner key (per entry)</td><td class="pub">public, unlinkable</td></tr>
+        <tr><td>ordinal, <code>notAfter</code></td><td class="pub">public: provable priority</td></tr>
+      </tbody>
+    </table>
+    <div>
+      <ul>
+        <li><b>Time is enforced, not claimed.</b> <code>blockTimeLt(notAfter)</code>: the ledger rejects a late commit.</li>
+        <li><b>Commitments, not hashes.</b> The salt blinds the digest, so a guessed report cannot be confirmed.</li>
+        <li><b>Unlinkable ownership.</b> Owner key = hash(domain, commitment, secret key), different for every entry.</li>
+        <li><b>Stolen openings are useless on chain.</b> Ownership is re-derived from the secret key inside the circuit.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="foot"><span>Disclosure Ledger</span><span>5</span></div>
+</section>
+
+<!-- 6. Demo -->
+<section class="slide" style="padding-top: 60px">
+  <div class="kicker">Demo</div>
+  <h2 style="margin: 8px 0 24px; font-size: 52px">The compiled circuits, running in the browser</h2>
+  <img class="shot" src="img/ui-final.png" alt="Disclosure Ledger web UI after the full story" style="width: 1300px" />
+  <div style="position: absolute; right: 110px; top: 250px; width: 350px">
+    <p style="font-size: 25px; line-height: 1.4">Static page in <code>ui/</code>. Every button calls the compiled contract through
+    <code>compact-runtime</code> and its WebAssembly runtime.</p>
+    <p style="font-size: 25px; line-height: 1.4">Alice commits, Bob commits later, the vendor checks off-chain, Alice proves the match.</p>
+    <p style="font-size: 25px; line-height: 1.4" class="muted">Three attacks are rejected by real circuit asserts.
+    No wallet or proof server: proofs are not generated in the demo.</p>
+  </div>
+  <div class="foot"><span>Disclosure Ledger</span><span>6</span></div>
+</section>
+
+<!-- 7. Verified -->
+<section class="slide">
+  <div class="kicker">What is verified today</div>
+  <h2>Checked in CI, and what is not done yet</h2>
+  <ul style="list-style: none; padding: 0">
+    <li><span class="check">✓</span>Compiles with Compact toolchain <b>0.31.1</b> (language 0.23), the one Midnight's public networks run (ledger 8). Prover and verifier keys for all 4 circuits.</li>
+    <li><span class="check">✓</span><b>24 / 24</b> simulator tests: deadlines, duplicates, circuit/TypeScript hash agreement, unlinkable keys, stolen and tampered openings, lifecycle, dispute order.</li>
+    <li><span class="check">✓</span>The same source compiles with toolchain <b>0.36</b> (language 0.28, ledger 9): the upgrade is a version bump.</li>
+    <li><span class="check">✓</span>Browser smoke test: headless Chrome runs the full story and three attacks against the compiled contract.</li>
+    <li style="margin-top: 34px"><span class="gap">!</span>Not yet deployed to Preprod: funding needs the faucet's Cloudflare captcha, and Preprod RPC/indexer now need a Blockfrost account. Both are human steps, so CI cannot do it alone.</li>
+    <li><span class="gap">!</span>No wallet or proof-server integration yet, so the demo runs the circuits without generating proofs.</li>
+    <li><span class="gap">!</span><code>notAfter</code> is an upper bound; inside one window the ordinal decides. A vendor must still judge whether two reports are the same bug.</li>
+  </ul>
+  <div class="foot"><span>Disclosure Ledger</span><span>7</span></div>
+</section>
+
+<!-- 8. Roadmap -->
+<section class="slide">
+  <div class="kicker">Roadmap</div>
+  <h2>From working contract to a tool researchers use</h2>
+  <div class="grid2">
+    <div class="card"><h3>1 · Live on Preprod</h3><p>Deploy the contract; connect the web UI to the Lace wallet and a proof server through midnight-js, so every button sends a real proven transaction.</p></div>
+    <div class="card"><h3>2 · Vendor-scoped disclosure</h3><p>Prove the match to one vendor's public key without publishing the digest at all.</p></div>
+    <div class="card"><h3>3 · Private reputation</h3><p>Prove "I own N resolved entries" without revealing or linking which ones.</p></div>
+    <div class="card"><h3>4 · Platform integration</h3><p>A bounty platform checks the ledger before it marks a report as a duplicate.</p></div>
+  </div>
+  <div class="foot"><span>Disclosure Ledger</span><span>8</span></div>
+</section>
+
+<!-- 9. Team -->
+<section class="slide">
+  <div class="kicker">Team</div>
+  <h2>tidelit4</h2>
+  <p style="max-width: 1500px"><b>AI-assisted build, disclosed.</b> The contract, tests, web UI, this deck and the demo video were
+  written with an AI coding assistant (Claude, by Anthropic) working in tidelit4's repository. Every result shown is produced by
+  code in the repository and checked in CI.</p>
+  <div class="card" style="margin-top: 50px; max-width: 1500px">
+    <p><b>Code:</b> <span class="mono">github.com/tidelit4/disclosure-ledger</span> · Apache-2.0</p>
+    <p><b>Run it:</b> <span class="mono">npm ci --legacy-peer-deps &amp;&amp; npm run compact &amp;&amp; npm test &amp;&amp; npm run ui:build &amp;&amp; npm run ui:serve</span></p>
+    <p><b>Deck and demo video:</b> <span class="mono">docs/deck.pdf</span> · <span class="mono">docs/video/disclosure-ledger-demo.mp4</span></p>
+    <p class="muted">Built on Midnight. Contract structure, owner-key pattern and simulator approach follow
+    midnightntwrk/example-bboard and example-counter (Apache-2.0).</p>
+  </div>
+  <div class="foot"><span>Disclosure Ledger</span><span>9</span></div>
+</section>
+
+<script>
+  const only = new URLSearchParams(location.search).get("only");
+  if (only) {
+    document.querySelectorAll(".slide").forEach((s, i) => { if (String(i + 1) !== only) s.remove(); });
+  }
+</script>
+</body>
+</html>
