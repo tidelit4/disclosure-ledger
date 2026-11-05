@@ -7,13 +7,17 @@
   "type": "module",
   "workspaces": [
     "contract",
-    "cli"
+    "cli",
+    "ui"
   ],
   "scripts": {
     "compact": "npm run compact --workspace contract",
     "test": "npm run test --workspace contract",
     "build": "npm run build --workspace contract",
-    "demo": "npm run demo --workspace cli"
+    "demo": "npm run demo --workspace cli",
+    "ui:build": "npm run build --workspace ui",
+    "ui:serve": "npm run serve --workspace ui",
+    "ui:smoke": "npm run smoke --workspace ui"
   },
   "dependencies": {
     "@midnight-ntwrk/compact-runtime": "0.16.0"

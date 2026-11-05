@@ -17,7 +17,7 @@ env:
 
 jobs:
   compile-and-test:
-    name: Compile contract, typecheck, test, demo
+    name: Compile contract, typecheck, test, demo, web UI
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -74,6 +74,26 @@ jobs:
 
       - name: Run CLI demo
         run: npm run demo --workspace cli
+
+      - name: Typecheck web UI
+        run: npm run typecheck --workspace ui
+
+      - name: Build web UI (bundles the compiled contract + onchain-runtime WebAssembly)
+        run: |
+          npm run build --workspace ui
+          ls -la ui/dist
+
+      - name: Web UI smoke test in headless Chrome (full story + attack attempts)
+        env:
+          CHROME_PATH: /usr/bin/google-chrome
+        run: npm run smoke --workspace ui
+
+      - name: Upload web UI build
+        uses: actions/upload-artifact@v7
+        with:
+          name: web-ui
+          path: ui/dist
+          if-no-files-found: error
 
       - name: Upload compiler output and test report
         if: always()

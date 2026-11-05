@@ -1,0 +1,55 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Disclosure Ledger: private proof of prior discovery on Midnight</title>
+    <link rel="stylesheet" href="style.css" />
+    <script type="module" src="app.js"></script>
+  </head>
+  <body>
+    <header>
+      <div class="brand">
+        <h1>Disclosure Ledger</h1>
+        <p class="tag">Private proof of prior discovery for security researchers, on Midnight</p>
+      </div>
+      <p class="honest" id="honest">
+        This page runs the <b>compiled Compact circuits</b> in your browser through
+        <code>@midnight-ntwrk/compact-runtime</code> (WebAssembly), against an in-memory ledger.
+        It is the same execution a DApp performs before proving. <b>No wallet, no proof server,
+        no network:</b> zero-knowledge proofs are not generated here and nothing is sent anywhere.
+      </p>
+    </header>
+
+    <section id="steps" class="steps"><p class="loading" id="loading">Loading the Midnight runtime (WebAssembly)...</p></section>
+
+    <main class="cols">
+      <section class="col">
+        <h2>Researchers: private state <span class="where">stays on each researcher's machine</span></h2>
+        <div id="private"></div>
+      </section>
+      <section class="col wide">
+        <h2>Public ledger <span class="where">what every observer sees</span></h2>
+        <div id="chain"></div>
+        <h2 class="sub">Try to break it <span class="where">real circuit asserts</span></h2>
+        <div id="attacks" class="attacks"></div>
+      </section>
+      <section class="col">
+        <h2>Vendor <span class="where">off-chain, private check</span></h2>
+        <div id="vendor"></div>
+      </section>
+    </main>
+
+    <section class="log">
+      <h2>Circuit calls <span class="where">newest first</span></h2>
+      <ol id="log" reversed></ol>
+    </section>
+
+    <footer>
+      Apache-2.0. Source, contract and tests:
+      <code>contract/src/disclosure-ledger.compact</code>. Built with Compact toolchain 0.31.1,
+      compact-runtime 0.16.0.
+    </footer>
+  </body>
+</html>
